@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greko Translator</title>
+    <style>
+        :root {
+            /* Светлая тема (по умолчанию) */
+            --greko-blue: #005BAA;
+            --greko-red: #C60C30;
+            --bg-color: #f1f3f4;
+            --container-bg: #FFFFFF;
+            --text-color: #202124;
+            --border-color: #dadce0;
+            --input-bg: #FFFFFF;
+            --output-bg: #f8f9fa;
+            --hover-bg: #e8f0fe;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+
+        /* Тёмная тема */
+        body.dark-theme {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e8eaed;
+            --border-color: #3c4043;
+            --input-bg: #1e1e1e;
+            --output-bg: #2d2e30;
+            --hover-bg: #303134;
+            --shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: 'Roboto', 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Шапка */
+        header {
+            background-color: var(--container-bg);
+            width: 100%;
+            padding: 15px 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--greko-blue);
+            box-sizing: border-box;
+            transition: background-color 0.3s;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Стили для ФЛАГА */
+        .logo-flag {
+            width: 40px;
+            height: 27px;
+            overflow: hidden;
+        }
+
+        .logo-flag img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: 1px solid #ccc;
+        }
+
+        h1 {
+            font-size: 22px;
+            color: var(--greko-blue);
+            margin: 0;
+        }
+
+        /* Тумблер темы */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 48px;
+        }
+
+        .theme-switch input {
+            display: none;
+        }
+
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--greko-blue);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .theme-icon {
+            margin-right: 10px;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        /* Контейнер переводчика */
+        .translator-container {
+            background: var(--container-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-top: 40px;
+            width: 95%;
+            max-width: 1000px;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .lang-select {
+            font-weight: bold;
+            color: var(--greko-blue);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .lang-select:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .swap-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        .swap-btn:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .text-area-wrapper {
+            display: flex;
+            flex-direction: row;
+            height: 300px;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .input-group:first-child {
+            border-right: 1px solid var(--border-color);
+        }
+
+        textarea {
+            flex: 1;
+            border: none;
+            padding: 20px;
+            font-size: 20px;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        textarea::placeholder {
+            color: #757575;
+        }
+
+        #outputText {
+            background-color: var(--output-bg);
+        }
+
+        .action-bar {
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
+            background-color: var(--container-bg);
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .icon-btn:hover {
+            background-color: var(--hover-bg);
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .text-area-wrapper {
+                flex-direction: column;
+                height: auto;
+            }
+            .input-group {
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+        
+        .accent-line {
+            height: 4px;
+            background-color: var(--greko-red);
+            width: 100%;
+        }
+
+        /* Подвал */
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #757575;
+            background-color: var(--container-bg);
+            border-top: 1px solid var(--border-color);
+            width: 100%;
+            box-sizing: border-box;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        /* Стили для индикатора загрузки */
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            color: var(--greko-blue);
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid var(--greko-blue);
+            z-index: 10;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="logo-flag">
+                <img src="Flag.png" alt="Флаг Greko" id="headerFlag">
+            </div>
+            <h1>Greko Translate</h1>
+        </div>
+        <div class="theme-switch-wrapper">
+            <span class="theme-icon">🌙</span>
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" />
+                <div class="slider"></div>
+            </label>
+        </div>
+    </header>
+    <div class="accent-line"></div>
+
+    <div class="translator-container">
+        <div class="controls">
+            <div id="sourceLang" class="lang-select">Русский/English (Определить)</div>
+            <button class="swap-btn" id="swapBtn" title="Поменять языки местами">⇄</button>
+            <div id="targetLang" class="lang-select">Greko</div>
+        </div>
+
+        <div class="text-area-wrapper">
+            <div class="input-group">
+                <textarea id="inputText"></textarea>
+                <div class="action-bar" id="inputAction"></div>
+            </div>
+
+            <div class="input-group">
+                <textarea id="outputText" readonly></textarea>
+                <div class="action-bar">
+                    <button class="icon-btn" id="copyBtn" title="Копировать перевод">📋 Копировать</button>
+                </div>
+            </div>
+        </div>
+        <div id="loadingIndicator" class="loading-indicator">Перевод...</div>
+    </div>
+    
+    <footer>
+        <span id="footerText">WoofIT права защищены GrekoTR сайт называться будет</span>
+    </footer>
+
+    <script>
+        
+        // --- ДАННЫЕ ДЛЯ РУССКОГО И GREKO (Транслитерация) ---
+        
+        const ruToGrDigraphs = [
+            { ru: 'КС', gr: 'Χ' }, { ru: 'КЗ', gr: 'Χ' }, 
+            { ru: 'кс', gr: 'χ' }, { ru: 'кз', gr: 'χ' },
+            { ru: 'Ё', gr: 'ΥΟ' }, { ru: 'ё', gr: 'υο' },
+            { ru: 'Щ', gr: "ΣΗ'" }, { ru: 'щ', gr: "ση'" },
+            { ru: 'Ш', gr: 'ΣΗ' }, { ru: 'ш', gr: 'ση' },
+            { ru: 'Ю', gr: 'ΥΘ' }, { ru: 'ю', gr: 'υθ' },
+            { ru: 'Я', gr: 'ΥΑ' }, { ru: 'я', gr: 'υα' }
+        ];
+
+        const charMapRuToGr = {
+            'А': 'Α', 'а': 'α', 'Б': 'Β', 'б': 'β', 'В': 'Ω', 'в': 'ω',
+            'Г': 'Γ', 'г': 'γ', 'Д': 'Δ', 'д': 'δ', 'Е': 'Ε', 'е': 'ε',
+            'Ж': 'Ξ', 'ж': 'ξ', 'З': 'Ζ', 'з': 'ζ', 'И': 'Ι', 'и': 'ι',
+            'Й': 'Υ', 'й': 'υ', 'К': 'Κ', 'к': 'κ', 'Л': 'Λ', 'л': 'λ',
+            'М': 'Μ', 'м': 'μ', 'Н': 'Ν', 'н': 'ν', 'О': 'Ο', 'о': 'ο',
+            'П': 'Π', 'π': 'π', 'Р': 'Ρ', 'р': 'ρ', 'С': 'Σ', 'с': 'σ',
+            'Т': 'Τ', 'т': 'τ', 'У': 'Θ', 'у': 'θ', 'Ф': 'Φ', 'ф': 'φ',
+            'Х': 'Η', 'х': 'η', 'Ц': 'ς', 'ц': 'ς', 'Ч': 'Ψ', 'ч': 'ψ',
+            'Ъ': "'", 'ъ': "'", 'Ы': 'Ί', 'ы': 'ί', 'Ь': "'", 'ь': "'",
+            'Э': 'Έ', 'э': 'έ', '?': ';'
+        };
+        
+        const grToRuDigraphs = [
+            { gr: "ΣΗ'", ru: 'Щ' }, { gr: "ση'", ru: 'щ' },
+            { gr: 'ΣΗ', ru: 'Ш' }, { gr: 'ση', ru: 'ш' },
+            { gr: 'ΥΟ', ru: 'Ё' }, { gr: 'υο', ru: 'ё' },
+            { gr: 'ΥΘ', ru: 'Ю' }, { gr: 'υθ', ru: 'ю' },
+            { gr: 'ΥΑ', ru: 'Я' }, { gr: 'υα', ru: 'я' },
+            { gr: 'Χ', ru: 'КС' }, { gr: 'χ', ru: 'кс' }
+        ];
+
+        // --- ЛОГИКА ТЕМЫ (без изменений) ---
+        
+        const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+        const currentTheme = localStorage.getItem('theme');
+
+        if (currentTheme) {
+            document.body.classList.add(currentTheme);
+            if (currentTheme === 'dark-theme') {
+                toggleSwitch.checked = true;
+            }
+        } else {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark-theme');
+                toggleSwitch.checked = true;
+            }
+        }
+
+        function switchTheme(e) {
+            if (e.target.checked) {
+                document.body.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+                localStorage.setItem('theme', 'light-theme');
+            }
+        }
+
+        toggleSwitch.addEventListener('change', switchTheme, false);
+
+
+        // --- ФУНКЦИЯ: РУССКИЙ -> GREKO (Транслитерация) ---
+        function translateRuToGreko(text) {
+            let result = text;
+            ruToGrDigraphs.forEach(pair => { result = result.split(pair.ru).join(pair.gr); });
+            
+            let finalStr = '';
+            for (let i = 0; i < result.length; i++) {
+                const char = result[i];
+                finalStr += charMapRuToGr[char] || char;
+            }
+            return finalStr;
+        }
+
+        // --- ФУНКЦИЯ: GREKO -> РУССКИЙ (Обратная транслитерация) ---
+        function translateGrekoToRu(text) {
+             let charMapGrToRu = {};
+            for (let key in charMapRuToGr) {
+                let val = charMapRuToGr[key];
+                if(key === '?') { charMapGrToRu[';'] = '?'; continue; }
+                if (val === "'") { charMapGrToRu["'"] = "ь"; } else { charMapGrToRu[val] = key; }
+            }
+            
+            let result = text;
+            grToRuDigraphs.forEach(pair => { result = result.split(pair.gr).join(pair.ru); });
+            let finalStr = '';
+            for (let i = 0; i < result.length; i++) {
+                const char = result[i];
+                finalStr += charMapGrToRu[char] || char;
+            }
+            return finalStr;
+        }
+
+        // --- ФУНКЦИЯ: API-ПЕРЕВОД (АНГЛИЙСКИЙ -> РУССКИЙ) ---
+
+        async function fetchEnToRuTranslation(text) {
+            // АДРЕС НАШЕЙ NETLIFY FUNCTION - Здесь нет ключа API!
+            const API_ENDPOINT = '/.netlify/functions/translate'; 
+
+            const dataToSend = {
+                text: text,
+                target_lang: "ru"
+            };
+
+            try {
+                // Отправляем запрос на нашу Netlify Function
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Если сервер или функция вернули ошибку
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+
+                // Бэкенд возвращает только чистый переведенный текст в 'translatedText'
+                return data.translatedText; 
+
+            } catch (error) {
+                console.error("Ошибка при вызове функции Netlify:", error);
+                return `[Ошибка перевода через API: ${error.message}] ${text}`;
+            }
+        }
+
+
+        // --- ИНТЕРФЕЙС И СОБЫТИЯ ---
+
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const sourceLabel = document.getElementById('sourceLang');
+        const targetLabel = document.getElementById('targetLang');
+        const swapBtn = document.getElementById('swapBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        let mode = 'to-gr'; 
+        let detectedLang = 'ru'; 
+        let isAutoDetect = true;
+        let isTranslating = false;
+
+        // Установка плейсхолдера
+        function getUILanguage() {
+            const lang = navigator.language.toLowerCase();
+            return lang.startsWith('ru') ? 'ru' : 'en';
+        }
+        
+        const uiLanguage = getUILanguage();
+        if (uiLanguage === 'en') {
+            inputText.placeholder = "Enter text (Russian, English, or Greko)...";
+        } else {
+            inputText.placeholder = "Введите текст (Русский, English, или Greko)...";
+        }
+
+
+        function detectLanguage(text) {
+            if (!text) return 'ru';
+            
+            const grekoPattern = /[α-ωΑ-ΩίέςΘΨΞΦ]/;
+            const ruPattern = /[а-яА-ЯёЁ]/;
+            const enPattern = /[a-zA-Z]/; 
+
+            if (grekoPattern.test(text)) return 'gr';
+            
+            if (enPattern.test(text) && !ruPattern.test(text)) return 'en';
+            
+            if (ruPattern.test(text)) return 'ru';
+            
+            return 'ru';
+        }
+
+        function updateLabels() {
+            if (mode === 'to-gr') {
+                let currentSource = 'Русский/English';
+                if (isAutoDetect) {
+                   if (detectedLang === 'en') currentSource = 'English (API)';
+                   else if (detectedLang === 'ru') currentSource = 'Русский';
+                   else currentSource = 'Русский/English (Опред.)';
+                } else {
+                    currentSource = detectedLang === 'en' ? 'English' : 'Русский';
+                }
+                
+                sourceLabel.textContent = currentSource;
+                targetLabel.textContent = 'Greko';
+            } else {
+                sourceLabel.textContent = isAutoDetect ? 'Greko (Опред.)' : 'Greko';
+                targetLabel.textContent = 'Русский'; 
+            }
+        }
+        
+        // Главная функция перевода с задержкой (debounce)
+        let debounceTimer;
+        
+        async function doTranslate(isManualSwap = false) {
+            const text = inputText.value.trim();
+            clearTimeout(debounceTimer);
+            
+            if (text === '' && !isManualSwap) {
+                outputText.value = '';
+                return;
+            }
+
+            if (isTranslating) return;
+
+            debounceTimer = setTimeout(async () => {
+                const currentDetection = detectLanguage(text);
+
+                if (isAutoDetect && !isManualSwap) {
+                    if (currentDetection === 'gr' && mode === 'to-gr') mode = 'from-gr'; 
+                    else if ((currentDetection === 'ru' || currentDetection === 'en') && mode === 'from-gr') mode = 'to-gr';
+                    
+                    if (currentDetection !== 'gr') detectedLang = currentDetection;
+                }
+                
+                updateLabels();
+                
+                if (mode === 'to-gr') {
+                    let textToTranslate = text;
+                    
+                    // 1. АНГЛИЙСКИЙ -> РУССКИЙ (Через API)
+                    if (detectedLang === 'en') {
+                        isTranslating = true;
+                        loadingIndicator.style.display = 'block';
+                        
+                        // Вызываем Netlify Function, которая безопасно использует ключ
+                        textToTranslate = await fetchEnToRuTranslation(text);
+                        
+                        loadingIndicator.style.display = 'none';
+                        isTranslating = false;
+                        
+                        // Если API вернуло ошибку или пустой текст
+                        if (!textToTranslate || textToTranslate.startsWith("[Ошибка перевода")) {
+                           outputText.value = textToTranslate;
+                           return;
+                        }
+                        
+                    }
+
+                    // 2. РУССКИЙ -> GREKO (Транслитерация)
+                    outputText.value = translateRuToGreko(textToTranslate);
+                    
+                } else {
+                    // GREKO -> РУССКИЙ (Обратная транслитерация)
+                    outputText.value = translateGrekoToRu(text);
+                }
+            }, 300); // Задержка 300мс
+        }
+
+
+        inputText.addEventListener('input', () => doTranslate(false));
+
+        swapBtn.addEventListener('click', () => {
+            if (isTranslating) return;
+            if (mode === 'to-gr') mode = 'from-gr';
+            else mode = 'to-gr';
+            
+            const currentIn = inputText.value;
+            inputText.value = outputText.value;
+            
+            isAutoDetect = false; 
+            // Передаем флаг, что это ручной свайп
+            doTranslate(true); 
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (outputText.value) {
+                navigator.clipboard.writeText(outputText.value).then(() => {
+                    const originalText = copyBtn.innerText;
+                    copyBtn.innerText = '✅ Скопировано';
+                    setTimeout(() => copyBtn.innerText = originalText, 2000);
+                });
+            }
+        });
+
+        updateLabels();
+
+    </script>
+</body>
+</html>
