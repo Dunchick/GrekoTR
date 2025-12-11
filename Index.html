@@ -341,7 +341,7 @@
     </div>
     
     <footer>
-        <span id="footerText">© 2025–2026 WoofIT — GrekoTR. Все права защищены.</span>
+        <span id="footerText">WoofIT права защищены GrekoTR сайт называться будет</span>
     </footer>
 
     <script>
@@ -360,7 +360,7 @@
 
         const charMapRuToGr = {
             'А': 'Α', 'а': 'α', 'Б': 'Β', 'б': 'β', 'В': 'Ω', 'в': 'ω',
-            'Г': 'Γ', 'г': 'γ', 'Д': 'Δ', 'д': 'δ', 'Е': 'Ε', 'е': 'ε',
+            'Г': 'Γ', 'г': 'γ', 'Д': 'Δ', 'δ': 'δ', 'Е': 'Ε', 'е': 'ε',
             'Ж': 'Ξ', 'ж': 'ξ', 'З': 'Ζ', 'з': 'ζ', 'И': 'Ι', 'и': 'ι',
             'Й': 'Υ', 'й': 'υ', 'К': 'Κ', 'к': 'κ', 'Л': 'Λ', 'л': 'λ',
             'М': 'Μ', 'м': 'μ', 'Н': 'Ν', 'н': 'ν', 'О': 'Ο', 'о': 'ο',
@@ -442,48 +442,47 @@
             return finalStr;
         }
 
+        // --- ФУНКЦИЯ: API-ПЕРЕВОД (АНГЛИЙСКИЙ -> РУССКИЙ) ---
 
-      // --- ФУНКЦИЯ: API-ПЕРЕВОД (АНГЛИЙСКИЙ -> РУССКИЙ) ---
+        async function fetchEnToRuTranslation(text) {
+            // АДРЕС НАШЕЙ NETLIFY FUNCTION - Здесь нет ключа API!
+            const API_ENDPOINT = '/.netlify/functions/translate'; 
 
-async function fetchEnToRuTranslation(text) {
-    // АДРЕС НАШЕЙ NETLIFY FUNCTION - Здесь нет ключа API!
-    const API_ENDPOINT = '/.netlify/functions/translate'; 
+            const dataToSend = {
+                text: text,
+                target_lang: "ru"
+            };
 
-    const dataToSend = {
-        text: text,
-        target_lang: "ru"
-    };
+            try {
+                // Отправляем запрос на нашу Netlify Function
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
 
-    try {
-        // Отправляем запрос на нашу Netlify Function
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        });
+                const data = await response.json();
 
-        const data = await response.json();
+                if (!response.ok) {
+                    // Если сервер или функция вернули ошибку
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
 
-        if (!response.ok) {
-            // Если сервер или функция вернули ошибку
-            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                // Бэкенд возвращает только чистый переведенный текст в 'translatedText'
+                return data.translatedText; 
+
+            } catch (error) {
+                console.error("Ошибка при вызове функции Netlify:", error);
+                
+                // --- ИСПРАВЛЕННЫЙ КОД: ДОБАВЛЕНИЕ СООБЩЕНИЯ О DISCORD С НОВОЙ СТРОКИ ---
+                const discordHelp = "\nДля помощи обратитесь в Discord к WoofFyrru.";
+                
+                // Возвращаем сообщение об ошибке + сообщение о Discord
+                return `[Ошибка перевода через API: ${error.message}]${discordHelp}`;
+            }
         }
-
-        // Бэкенд возвращает только чистый переведенный текст в 'translatedText'
-        return data.translatedText; 
-
-    } catch (error) {
-        console.error("Ошибка при вызове функции Netlify:", error);
-        
-        // ДОБАВЛЯЕМ СООБЩЕНИЕ ДЛЯ ПОМОЩИ
-        const discordHelp = "\nДля помощи обратитесь в Discord к WoofFyrru.";
-        
-        // Возвращаем сообщение об ошибке + сообщение о Discord
-        return `[Ошибка перевода через API: ${error.message}]${discordHelp}`;
-    }
-}
 
 
         // --- ИНТЕРФЕЙС И СОБЫТИЯ ---
