@@ -1,11 +1,11 @@
-// Используем 'node-fetch' для отправки HTTP-запросов (так как это Node.js окружение)
-// Примечание: 'node-fetch' необходимо установить в проекте, если вы запускаете локально.
-// Netlify Functions обычно предоставляют его по умолчанию.
+// netlify/functions/translate.js
+
+// Используем 'node-fetch' (требует package.json в корне)
 const fetch = require('node-fetch');
 
-// API-ключ берется из переменных окружения Netlify!
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; 
-const RAPIDAPI_HOST = "translateai.p.rapidapi.com";
+// --- НАСТРОЙКИ API (Используем переменные Netlify) ---
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; // <-- Берется из Netlify!
+const RAPIDAPI_HOST = "translateai.p.rapidapi.com"; // <-- Это имя хоста, НЕ КЛЮЧ!
 const API_URL = "https://" + RAPIDAPI_HOST + "/google/translate/json";
 
 // Главный обработчик для Netlify Function
@@ -29,7 +29,6 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // Извлекаем текст, который нужно перевести (с фронтенда)
     const { text } = data; 
     
     if (!text) {
@@ -39,27 +38,21 @@ exports.handler = async (event, context) => {
         };
     }
 
+    // Проверка, что ключ доступен функции
     if (!RAPIDAPI_KEY) {
          return { 
             statusCode: 500, 
-            body: JSON.stringify({ error: "API Key not configured in Netlify Environment Variables." }) 
+            body: JSON.stringify({ error: "API Key not configured in Netlify Environment Variables. Check RAPIDAPI_KEY." }) 
         };
     }
 
 
-    // --- 2. Формирование запроса к RapidAPI на основе вашей структуры ---
-    
-    // ВАЖНО: Мы заменяем 'bn' (бенгальский) на 'ru' (русский), 
-    // и используем только минимальную обертку для передачи текста пользователя.
-    
+    // --- 2. Формирование запроса к RapidAPI ---
     const bodyPayload = {
         origin_language: 'en',
-        target_language: 'ru', // Изменено на Русский
-        words_not_to_translate: 'Greko; New York', // Добавлено Greko
-        // paths_to_exclude: 'product.media.img_desc', // Этот ключ не нужен, если мы не переводим сложный JSON
-        // common_keys_to_exclude: 'name; price', // Этот ключ не нужен, если мы не переводим сложный JSON
+        target_language: 'ru', 
+        words_not_to_translate: 'Greko; New York',
         json_content: {
-            // Оборачиваем наш текст в простой объект, чтобы API мог его обработать
             user_input: text 
         }
     };
@@ -67,12 +60,13 @@ exports.handler = async (event, context) => {
     const options = {
         method: 'POST',
         headers: {
-            'x-rapidapi-host': RAPIDAPI_HOST,
+            // ИСПОЛЬЗУЕМ ХОСТ
+            'x-rapidapi-host': RAPIDAPI_HOST, 
             'Content-Type': 'application/json',
-            // Добавляем наш секретный ключ, который скрыт в Netlify
-            'x-rapidapi-key': RAPIDAPI_KEY 
+            // ИСПОЛЬЗУЕМ ПЕРЕМЕННУЮ КЛЮЧА
+            'x-rapidapi-key': RAPIDAPI_KEY // <-- ИСПОЛЬЗУЕМ ПЕРЕМЕННУЮ NETLIFY!
         },
-        body: JSON.stringify(bodyPayload) // Тело должно быть строкой JSON
+        body: JSON.stringify(bodyPayload)
     };
 
     try {
@@ -89,8 +83,6 @@ exports.handler = async (event, context) => {
         }
         
         // --- 4. Извлечение переведенного текста ---
-        // Поскольку мы отправили текст под ключом 'user_input', 
-        // мы ожидаем получить его обратно под тем же ключом.
         const translatedText = resultData.translated_content.user_input;
         
         // 5. Возврат результата на Фронтенд
