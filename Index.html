@@ -341,7 +341,7 @@
     </div>
     
     <footer>
-        <span id="footerText">WoofIT права защищены GrekoTR сайт называться будет</span>
+        <span id="footerText">© 2025–2026 WoofIT — GrekoTR. Все права защищены.</span>
     </footer>
 
     <script>
@@ -442,42 +442,48 @@
             return finalStr;
         }
 
-        // --- ФУНКЦИЯ: API-ПЕРЕВОД (АНГЛИЙСКИЙ -> РУССКИЙ) ---
 
-        async function fetchEnToRuTranslation(text) {
-            // АДРЕС НАШЕЙ NETLIFY FUNCTION - Здесь нет ключа API!
-            const API_ENDPOINT = '/.netlify/functions/translate'; 
+      // --- ФУНКЦИЯ: API-ПЕРЕВОД (АНГЛИЙСКИЙ -> РУССКИЙ) ---
 
-            const dataToSend = {
-                text: text,
-                target_lang: "ru"
-            };
+async function fetchEnToRuTranslation(text) {
+    // АДРЕС НАШЕЙ NETLIFY FUNCTION - Здесь нет ключа API!
+    const API_ENDPOINT = '/.netlify/functions/translate'; 
 
-            try {
-                // Отправляем запрос на нашу Netlify Function
-                const response = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dataToSend)
-                });
+    const dataToSend = {
+        text: text,
+        target_lang: "ru"
+    };
 
-                const data = await response.json();
+    try {
+        // Отправляем запрос на нашу Netlify Function
+        const response = await fetch(API_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        });
 
-                if (!response.ok) {
-                    // Если сервер или функция вернули ошибку
-                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
-                }
+        const data = await response.json();
 
-                // Бэкенд возвращает только чистый переведенный текст в 'translatedText'
-                return data.translatedText; 
-
-            } catch (error) {
-                console.error("Ошибка при вызове функции Netlify:", error);
-                return `[Ошибка перевода через API: ${error.message}] ${text}`;
-            }
+        if (!response.ok) {
+            // Если сервер или функция вернули ошибку
+            throw new Error(data.error || `HTTP error! status: ${response.status}`);
         }
+
+        // Бэкенд возвращает только чистый переведенный текст в 'translatedText'
+        return data.translatedText; 
+
+    } catch (error) {
+        console.error("Ошибка при вызове функции Netlify:", error);
+        
+        // ДОБАВЛЯЕМ СООБЩЕНИЕ ДЛЯ ПОМОЩИ
+        const discordHelp = "\nДля помощи обратитесь в Discord к WoofFyrru.";
+        
+        // Возвращаем сообщение об ошибке + сообщение о Discord
+        return `[Ошибка перевода через API: ${error.message}]${discordHelp}`;
+    }
+}
 
 
         // --- ИНТЕРФЕЙС И СОБЫТИЯ ---

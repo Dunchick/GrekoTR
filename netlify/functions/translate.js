@@ -4,8 +4,8 @@
 const fetch = require('node-fetch');
 
 // --- НАСТРОЙКИ API (Используем переменные Netlify) ---
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; // <-- Берется из Netlify!
-const RAPIDAPI_HOST = "translateai.p.rapidapi.com"; // <-- Это имя хоста, НЕ КЛЮЧ!
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; // <-- КЛЮЧ БЕРЕТСЯ ЗДЕСЬ ИЗ NETLIFY!
+const RAPIDAPI_HOST = "translateai.p.rapidapi.com"; // <-- Это имя хоста
 const API_URL = "https://" + RAPIDAPI_HOST + "/google/translate/json";
 
 // Главный обработчик для Netlify Function
@@ -78,7 +78,7 @@ exports.handler = async (event, context) => {
             console.error("RapidAPI Error:", resultData.error || `Status: ${response.status}`);
              return {
                 statusCode: 500,
-                body: JSON.stringify({ error: `Translation API error: ${resultData.error || 'Server responded with error.'}` })
+                body: JSON.stringify({ error: `Internal server error during translation.` }) // Упрощенное сообщение об ошибке
             };
         }
         
