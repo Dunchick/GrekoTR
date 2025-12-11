@@ -1,70 +1,56 @@
 // netlify/functions/translate.js
-
-// Используем 'node-fetch' (требует package.json в корне)
 const fetch = require('node-fetch');
 
-// --- НАСТРОЙКИ API (Используем переменные Netlify) ---
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; // <-- КЛЮЧ БЕРЕТСЯ ЗДЕСЬ ИЗ NETLIFY!
-const RAPIDAPI_HOST = "translateai.p.rapidapi.com"; // <-- Это имя хоста
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; // Ключ из переменных окружения Netlify
+const RAPIDAPI_HOST = "translateai.p.rapidapi.com";
 const API_URL = "https://" + RAPIDAPI_HOST + "/google/translate/json";
 
-// Главный обработчик для Netlify Function
 exports.handler = async (event, context) => {
     
-    // --- 1. Проверка и получение данных с Фронтенда ---
+    // Проверка POST и тела запроса
     if (event.httpMethod !== 'POST' || !event.body) {
-        return { 
-            statusCode: 405, 
-            body: JSON.stringify({ error: "Method Not Allowed or missing body" }) 
-        };
+        return { statusCode: 405, body: JSON.stringify({ error: "Method Not Allowed or missing body" }) };
     }
 
     let data;
     try {
         data = JSON.parse(event.body);
     } catch (e) {
-        return { 
-            statusCode: 400, 
-            body: JSON.stringify({ error: "Invalid JSON format" }) 
-        };
+        return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON format" }) };
     }
 
     const { text } = data; 
     
     if (!text) {
-        return { 
-            statusCode: 400, 
-            body: JSON.stringify({ error: "Missing text parameter" }) 
-        };
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing text parameter" }) };
     }
 
-    // Проверка, что ключ доступен функции
+    // --- DEBUG LOGGING: Проверка наличия ключа ---
     if (!RAPIDAPI_KEY) {
+         console.error("DEBUG: RAPIDAPI_KEY отсутствует в переменных окружения Netlify.");
          return { 
             statusCode: 500, 
             body: JSON.stringify({ error: "API Key not configured in Netlify Environment Variables. Check RAPIDAPI_KEY." }) 
         };
+    } else {
+         // Логируем первые символы ключа, чтобы убедиться, что он есть
+         console.log(`DEBUG: RAPIDAPI_KEY присутствует (начинается с: ${RAPIDAPI_KEY.substring(0, 5)}...)`);
     }
 
-
-    // --- 2. Формирование запроса к RapidAPI ---
+    // --- Формирование запроса ---
     const bodyPayload = {
         origin_language: 'en',
         target_language: 'ru', 
         words_not_to_translate: 'Greko; New York',
-        json_content: {
-            user_input: text 
-        }
+        json_content: { user_input: text }
     };
     
     const options = {
         method: 'POST',
         headers: {
-            // ИСПОЛЬЗУЕМ ХОСТ
             'x-rapidapi-host': RAPIDAPI_HOST, 
             'Content-Type': 'application/json',
-            // ИСПОЛЬЗУЕМ ПЕРЕМЕННУЮ КЛЮЧА
-            'x-rapidapi-key': RAPIDAPI_KEY // <-- ИСПОЛЬЗУЕМ ПЕРЕМЕННУЮ NETLIFY!
+            'x-rapidapi-key': RAPIDAPI_KEY
         },
         body: JSON.stringify(bodyPayload)
     };
@@ -74,25 +60,28 @@ exports.handler = async (event, context) => {
         const response = await fetch(API_URL, options);
         const resultData = await response.json();
         
-        if (!response.ok || resultData.error) {
-            console.error("RapidAPI Error:", resultData.error || `Status: ${response.status}`);
-             return {
+        if (!response.ok) {
+            // --- DEBUG LOGGING: Логируем статус ошибки RapidAPI ---
+            console.error(`DEBUG: RapidAPI ответил со статусом: ${response.status}`);
+            console.error("DEBUG: RapidAPI Тело ошибки:", resultData);
+            
+            const apiErrorMessage = resultData.error || `Server responded with status ${response.status}.`;
+            return {
                 statusCode: 500,
-                body: JSON.stringify({ error: `Internal server error during translation.` }) // Упрощенное сообщение об ошибке
+                body: JSON.stringify({ error: `Translation API error: ${apiErrorMessage}` })
             };
         }
         
-        // --- 4. Извлечение переведенного текста ---
+        // ... (Успешная обработка ответа)
         const translatedText = resultData.translated_content.user_input;
         
-        // 5. Возврат результата на Фронтенд
         return {
             statusCode: 200,
             body: JSON.stringify({ translatedText })
         };
 
     } catch (error) {
-        console.error("Function fetch error:", error);
+        console.error("Function fetch error (Network/Timeout):", error.message);
         return {
             statusCode: 500,
             body: JSON.stringify({ error: "Internal server error during translation." })
